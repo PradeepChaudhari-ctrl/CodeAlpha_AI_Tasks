@@ -1,29 +1,18 @@
-"""
-CodeAlpha AI Internship — Task 2: Chatbot for FAQs
-Author: CodeAlpha Intern
-Description: An NLP-powered FAQ chatbot using TF-IDF cosine similarity,
-             with a Tkinter chat UI. No external API key required.
-"""
-
 import tkinter as tk
 from tkinter import scrolledtext
 import threading
 import string
 import math
 from collections import Counter
-
-# ─────────────────────────── FAQ Dataset ─────────────────────────────
 FAQ_DATA = [
-    # General
-    ("What is CodeAlpha?",
+  ("What is CodeAlpha?",
      "CodeAlpha is a leading software development company dedicated to driving innovation "
      "and excellence across emerging technologies, including AI, web, and mobile development."),
     ("What services does CodeAlpha offer?",
      "CodeAlpha offers software development, AI/ML solutions, web development, mobile app development, "
      "UI/UX design, and internship programs for students."),
     ("How can I contact CodeAlpha?",
-     "You can reach CodeAlpha at services@codealpha.tech, WhatsApp: +91 9336576683, or visit www.codealpha.tech."),
-    # Internship
+     "You can reach CodeAlpha at services@codealpha.tech, WhatsApp: +91 9336576683, or visit www.codealpha.tech."),                    
     ("How do I apply for the CodeAlpha internship?",
      "You can apply for a CodeAlpha internship through their official website at www.codealpha.tech "
      "or by reaching out via email at services@codealpha.tech."),
@@ -44,7 +33,6 @@ FAQ_DATA = [
      "along with a unique ID certificate."),
     ("Can I get a letter of recommendation?",
      "Yes, a letter of recommendation is awarded based on your performance during the internship."),
-    # AI Tasks
     ("What are the AI tasks in the internship?",
      "The 4 AI tasks are: (1) Language Translation Tool, (2) Chatbot for FAQs, "
      "(3) Music Generation with AI, and (4) Object Detection and Tracking."),
@@ -60,7 +48,6 @@ FAQ_DATA = [
     ("What is Task 4 about?",
      "Task 4 involves Object Detection and Tracking using YOLO or Faster R-CNN with OpenCV "
      "and tracking algorithms like SORT or Deep SORT."),
-    # Technical
     ("What programming language is used?",
      "Python is the primary programming language used across all AI internship tasks."),
     ("What libraries are used in the chatbot task?",
@@ -75,7 +62,6 @@ FAQ_DATA = [
     ("What is cosine similarity?",
      "Cosine similarity is a metric that measures the angle between two text vectors. "
      "A value of 1 means identical, 0 means completely different. It's widely used in NLP for text matching."),
-    # Greetings
     ("Hello", "Hello! 👋 I'm the CodeAlpha FAQ Chatbot. How can I help you today?"),
     ("Hi",    "Hi there! 😊 Ask me anything about CodeAlpha or the AI internship."),
     ("Who are you?",
@@ -84,8 +70,6 @@ FAQ_DATA = [
     ("Thank you", "You're welcome! 😊 Feel free to ask if you have more questions."),
     ("Bye",   "Goodbye! 👋 Best of luck with your internship tasks!"),
 ]
-
-# ─────────────────────────── NLP Engine ──────────────────────────────
 class NLPEngine:
     """Lightweight TF-IDF + cosine similarity without external libraries."""
 
@@ -93,8 +77,6 @@ class NLPEngine:
         self.questions = [q for q, _ in faq_data]
         self.answers   = [a for _, a in faq_data]
         self.vocab, self.tfidf_matrix = self._build_tfidf()
-
-    # ── Text helpers ─────────────────────────────────────────────────
     @staticmethod
     def _tokenize(text: str) -> list[str]:
         text = text.lower().translate(str.maketrans("", "", string.punctuation))
@@ -109,12 +91,8 @@ class NLPEngine:
         vocab = sorted({t for doc in tokenized_docs for t in doc})
         idx   = {w: i for i, w in enumerate(vocab)}
         N     = len(tokenized_docs)
-
-        # Document frequency
         df = Counter(w for doc in tokenized_docs for w in set(doc))
         idf = {w: math.log((N + 1) / (df[w] + 1)) + 1 for w in vocab}
-
-        # TF-IDF matrix
         matrix = []
         for doc in tokenized_docs:
             tf = Counter(doc)
@@ -155,8 +133,6 @@ class NLPEngine:
                     "services@codealpha.tech for a detailed answer.")
         return self.answers[best_idx]
 
-
-# ─────────────────────────── Chat UI ─────────────────────────────────
 class ChatbotApp:
     def __init__(self, root: tk.Tk):
         self.root = root
@@ -170,11 +146,8 @@ class ChatbotApp:
                       "Ask me anything about CodeAlpha or the AI internship program!")
 
     def _build_ui(self):
-        # Title
         tk.Label(self.root, text="💬  CodeAlpha FAQ Chatbot",
                  font=("Segoe UI", 16, "bold"), bg="#181825", fg="#cba6f7").pack(fill="x", pady=8)
-
-        # Chat history
         self.chat_area = scrolledtext.ScrolledText(
             self.root, state="disabled", wrap="word", font=("Segoe UI", 11),
             bg="#313244", fg="#cdd6f4", relief="flat", bd=0, padx=12, pady=8)
@@ -182,8 +155,6 @@ class ChatbotApp:
         self.chat_area.tag_config("user", foreground="#89b4fa", font=("Segoe UI", 11, "bold"))
         self.chat_area.tag_config("bot",  foreground="#a6e3a1", font=("Segoe UI", 11))
         self.chat_area.tag_config("meta", foreground="#6c7086", font=("Segoe UI", 9))
-
-        # Input row
         input_frame = tk.Frame(self.root, bg="#1e1e2e")
         input_frame.pack(fill="x", padx=16, pady=(0, 14))
 
@@ -198,8 +169,6 @@ class ChatbotApp:
                              activebackground="#74c7ec", cursor="hand2",
                              command=self._send, padx=14, pady=6)
         send_btn.pack(side="right")
-
-        # Hint
         tk.Label(self.root, text="Try: 'What is CodeAlpha?'  |  'How do I submit tasks?'  |  'What perks do I get?'",
                  font=("Segoe UI", 8), bg="#1e1e2e", fg="#6c7086").pack(pady=(0, 6))
 
@@ -223,9 +192,6 @@ class ChatbotApp:
     def _respond(self, user_input: str):
         answer = self.engine.get_answer(user_input)
         self.root.after(300, lambda: self._bot_say(answer))
-
-
-# ─────────────────────────── Entry point ─────────────────────────────
 if __name__ == "__main__":
     root = tk.Tk()
     app = ChatbotApp(root)
