@@ -1,21 +1,7 @@
-"""
-CodeAlpha AI Internship — Task 4: Object Detection and Tracking
-Author: CodeAlpha Intern
-Description: Real-time object detection using YOLOv8 (ultralytics) + ByteTrack/SORT tracking.
-             Supports webcam and video file input.
-
-Usage:
-    python object_detection.py                  # webcam
-    python object_detection.py --source video.mp4
-    python object_detection.py --source 0       # webcam device index
-"""
-
 import argparse
 import sys
 import time
 import os
-
-# ─────────────────────────── Import guards ───────────────────────────
 try:
     import cv2
     CV2_OK = True
@@ -35,17 +21,10 @@ try:
     NP_OK = True
 except ImportError:
     NP_OK = False
-
-
-# ─────────────────────────── Simple SORT tracker ─────────────────────
 class SimpleTracker:
-    """
-    Lightweight centroid-based tracker (no external deps).
-    Assigns consistent IDs to objects across frames using IoU matching.
-    """
-    def __init__(self, max_lost: int = 30, iou_threshold: float = 0.3):
+def __init__(self, max_lost: int = 30, iou_threshold: float = 0.3):
         self.next_id      = 1
-        self.tracks: dict = {}   # {id: {"box": ..., "lost": int, "class": str}}
+        self.tracks: dict = {}   {id: {"box": ..., "lost": int, "class": str}}
         self.max_lost     = max_lost
         self.iou_threshold = iou_threshold
 
@@ -59,12 +38,6 @@ class SimpleTracker:
         return inter / (a1 + a2 - inter + 1e-6)
 
     def update(self, detections: list[tuple]) -> list[tuple]:
-        """
-        Args:
-            detections: [(x1,y1,x2,y2,conf,class_name), ...]
-        Returns:
-            tracked: [(x1,y1,x2,y2,track_id,class_name,conf), ...]
-        """
         unmatched_dets = list(range(len(detections)))
         matched_ids    = set()
 
@@ -83,12 +56,8 @@ class SimpleTracker:
                 matched_ids.add(tid)
             else:
                 self.tracks[tid]["lost"] += 1
-
-        # Remove old tracks
         self.tracks = {tid: t for tid, t in self.tracks.items()
                        if t["lost"] <= self.max_lost}
-
-        # Create new tracks for unmatched detections
         for di in unmatched_dets:
             x1, y1, x2, y2, conf, cls = detections[di]
             self.tracks[self.next_id] = {
@@ -102,8 +71,6 @@ class SimpleTracker:
             for tid, t in self.tracks.items() if t["lost"] == 0
         ]
 
-
-# ─────────────────────────── Colour palette ──────────────────────────
 PALETTE = [
     (255, 56, 56), (255, 157, 151), (255, 112, 31), (255, 178, 29),
     (207, 210, 49), (72, 249, 10),  (146, 204, 23), (61, 219, 134),
@@ -115,16 +82,11 @@ PALETTE = [
 def get_color(track_id: int) -> tuple:
     return PALETTE[track_id % len(PALETTE)]
 
-
-# ─────────────────────────── Drawing ─────────────────────────────────
 def draw_track(frame, x1, y1, x2, y2, track_id, cls_name, conf, fps=None):
     color  = get_color(track_id)
     label  = f"#{track_id} {cls_name} {conf:.0%}"
 
-    # Box
     cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-
-    # Label background
     (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.55, 1)
     cv2.rectangle(frame, (x1, y1 - th - 8), (x1 + tw + 6, y1), color, -1)
     cv2.putText(frame, label, (x1 + 3, y1 - 5),
@@ -143,18 +105,15 @@ def draw_hud(frame, n_tracks: int, fps: float):
     cv2.putText(frame, "Press Q to quit", (8, h - 12),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.45, (150, 150, 150), 1)
 
-
-# ─────────────────────────── Main loop ───────────────────────────────
 def run(source, conf_threshold=0.4, model_name="yolov8n.pt"):
     if not CV2_OK or not YOLO_OK:
         print("❌ Required libraries not installed. See messages above.")
         sys.exit(1)
 
     print(f"📦 Loading YOLO model: {model_name} …")
-    model   = YOLO(model_name)   # auto-downloads on first run
+    model   = YOLO(model_name) 
     tracker = SimpleTracker()
 
-    # Open video source
     src = int(source) if str(source).isdigit() else source
     cap = cv2.VideoCapture(src)
     if not cap.isOpened():
@@ -172,8 +131,6 @@ def run(source, conf_threshold=0.4, model_name="yolov8n.pt"):
         if not ret:
             print("📼 Stream ended.")
             break
-
-        # ── YOLO inference ────────────────────────────────────────
         results = model(frame, verbose=False, conf=conf_threshold)[0]
         detections = []
         for box in results.boxes:
@@ -182,15 +139,12 @@ def run(source, conf_threshold=0.4, model_name="yolov8n.pt"):
             cls   = model.names[int(box.cls[0])]
             detections.append((x1, y1, x2, y2, conf, cls))
 
-        # ── Tracking ──────────────────────────────────────────────
         tracked = tracker.update(detections)
 
-        # ── Draw ──────────────────────────────────────────────────
         for item in tracked:
             x1, y1, x2, y2, tid, cls_name, conf = item
             draw_track(frame, x1, y1, x2, y2, tid, cls_name, conf)
 
-        # FPS
         now = time.time()
         inst_fps   = 1.0 / (now - prev_time + 1e-9)
         fps_smooth = 0.9 * fps_smooth + 0.1 * inst_fps
@@ -205,9 +159,6 @@ def run(source, conf_threshold=0.4, model_name="yolov8n.pt"):
     cap.release()
     cv2.destroyAllWindows()
     print("👋 Detection stopped.")
-
-
-# ─────────────────────────── CLI ─────────────────────────────────────
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="CodeAlpha Task 4: Object Detection & Tracking")
