@@ -1,15 +1,5 @@
-"""
-CodeAlpha AI Internship — Task 3: Music Generation with AI
-Author: CodeAlpha Intern
-Description: LSTM-based music generator using music21 for MIDI processing.
-             Trains on a built-in sample sequence and generates new music.
-             Run:  python music_generator.py
-"""
-
 import random
 import os
-
-# ─────────────────────────── Try imports ─────────────────────────────
 try:
     import numpy as np
     from music21 import stream, note, chord, instrument, tempo, midi
@@ -22,17 +12,12 @@ except ImportError:
     FULL_MODE = False
     print("⚠️  Some libraries missing. Running in DEMO mode (generates MIDI without training).")
     print("   Install with:  pip install tensorflow music21 numpy\n")
-
-
-# ─────────────────────────── Constants ───────────────────────────────
 SEQ_LENGTH   = 20
 EPOCHS       = 50
 BATCH_SIZE   = 32
 LATENT_UNITS = 128
 OUTPUT_DIR   = "generated_music"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-
-# Built-in sample sequences (classical / jazz motifs)
 SAMPLE_SEQUENCES = [
     ["C4","E4","G4","C5","G4","E4","C4","D4","F4","A4","D5","A4","F4","D4"],
     ["A4","C5","E5","A5","G5","E5","C5","A4","F4","A4","C5","E5","D5","B4"],
@@ -45,9 +30,6 @@ ALL_NOTES = sorted({n for seq in SAMPLE_SEQUENCES for n in seq})
 NOTE_TO_INT = {n: i for i, n in enumerate(ALL_NOTES)}
 INT_TO_NOTE = {i: n for n, i in NOTE_TO_INT.items()}
 VOCAB_SIZE  = len(ALL_NOTES)
-
-
-# ─────────────────────────── Data Prep ───────────────────────────────
 def build_dataset(sequences, seq_len=SEQ_LENGTH):
     """Convert note sequences into (X, y) integer arrays."""
     flat = [n for seq in sequences for n in seq]
@@ -57,9 +39,6 @@ def build_dataset(sequences, seq_len=SEQ_LENGTH):
         X.append(encoded[i: i + seq_len])
         y.append(encoded[i + seq_len])
     return np.array(X), np.array(y)
-
-
-# ─────────────────────────── Model ───────────────────────────────────
 def build_model(vocab_size: int, seq_len: int) -> "tf.keras.Model":
     model = Sequential([
         Embedding(vocab_size, 64, input_length=seq_len),
@@ -73,9 +52,6 @@ def build_model(vocab_size: int, seq_len: int) -> "tf.keras.Model":
                   metrics=["accuracy"])
     model.summary()
     return model
-
-
-# ─────────────────────────── Generation ──────────────────────────────
 def generate_notes(model, seed_seq: list[int], n_notes: int = 50,
                    temperature: float = 0.8) -> list[str]:
     """Auto-regressively generate notes from a seed sequence."""
@@ -83,15 +59,12 @@ def generate_notes(model, seed_seq: list[int], n_notes: int = 50,
     for _ in range(n_notes):
         x = np.array([generated[-SEQ_LENGTH:]])
         preds = model.predict(x, verbose=0)[0].astype("float64")
-        # Temperature scaling
         preds = np.log(preds + 1e-10) / temperature
         preds = np.exp(preds) / np.sum(np.exp(preds))
         next_idx = np.random.choice(len(preds), p=preds)
         generated.append(next_idx)
     return [INT_TO_NOTE[i] for i in generated[-n_notes:]]
 
-
-# ─────────────────────────── MIDI Export ─────────────────────────────
 def notes_to_midi(note_list: list[str], output_path: str,
                   bpm: int = 120, duration: float = 0.5):
     """Convert a list of note strings to a MIDI file."""
@@ -106,7 +79,6 @@ def notes_to_midi(note_list: list[str], output_path: str,
             n.duration.quarterLength = duration
             part.append(n)
         except Exception:
-            # Skip invalid notes silently
             pass
 
     score.append(part)
@@ -115,9 +87,6 @@ def notes_to_midi(note_list: list[str], output_path: str,
     midi_file.write()
     midi_file.close()
     print(f"🎵 MIDI saved → {output_path}")
-
-
-# ─────────────────────────── Demo mode ───────────────────────────────
 def demo_generate(output_path: str):
     """Generate a random music21 MIDI without ML training."""
     print("\n🎹 Demo Mode: Generating music using rule-based patterns…")
@@ -133,9 +102,6 @@ def demo_generate(output_path: str):
         pattern.append(prev)
 
     notes_to_midi(pattern, output_path)
-
-
-# ─────────────────────────── Main ────────────────────────────────────
 def main():
     print("=" * 60)
     print("  CodeAlpha AI Internship — Task 3: Music Generation")
@@ -146,8 +112,6 @@ def main():
     if not FULL_MODE:
         demo_generate(output_path)
         return
-
-    # ── Full ML pipeline ──────────────────────────────────────────
     print("\n📂 Preparing dataset…")
     X, y = build_dataset(SAMPLE_SEQUENCES)
     print(f"   Samples: {len(X)}  |  Vocab: {VOCAB_SIZE}  |  Seq len: {SEQ_LENGTH}")
