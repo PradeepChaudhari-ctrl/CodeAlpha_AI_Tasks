@@ -1,15 +1,7 @@
-"""
-CodeAlpha AI Internship — Task 1: Language Translation Tool
-Author: CodeAlpha Intern
-Description: A GUI-based language translation tool using deep_translator (free, no API key needed).
-"""
-
 import tkinter as tk
 from tkinter import ttk, messagebox
 import threading
 from deep_translator import GoogleTranslator
-
-# ─────────────────────────── Language map ────────────────────────────
 LANGUAGES = {
     "Auto Detect":  "auto",
     "Afrikaans":    "af",  "Albanian":     "sq",  "Arabic":       "ar",
@@ -31,8 +23,6 @@ LANGUAGES = {
     "Turkish":      "tr",  "Ukrainian":    "uk",  "Urdu":         "ur",
     "Vietnamese":   "vi",
 }
-
-# ─────────────────────────── Main App ────────────────────────────────
 class TranslationApp:
     def __init__(self, root: tk.Tk):
         self.root = root
@@ -41,8 +31,6 @@ class TranslationApp:
         self.root.configure(bg="#1e1e2e")
         self.root.resizable(True, True)
         self._build_ui()
-
-    # ── UI Construction ──────────────────────────────────────────────
     def _build_ui(self):
         style = ttk.Style()
         style.theme_use("clam")
@@ -51,16 +39,12 @@ class TranslationApp:
         style.configure("TButton", background="#89b4fa", foreground="#1e1e2e",
                         font=("Segoe UI", 10, "bold"), padding=6)
         style.map("TButton", background=[("active", "#74c7ec")])
-
-        # Title bar
         title_frame = tk.Frame(self.root, bg="#181825", pady=10)
         title_frame.pack(fill="x")
         tk.Label(title_frame, text="🌍  Language Translation Tool",
                  font=("Segoe UI", 18, "bold"), bg="#181825", fg="#cba6f7").pack()
         tk.Label(title_frame, text="CodeAlpha AI Internship — Task 1",
                  font=("Segoe UI", 10), bg="#181825", fg="#6c7086").pack()
-
-        # Language selector row
         lang_frame = tk.Frame(self.root, bg="#1e1e2e", pady=12)
         lang_frame.pack(fill="x", padx=30)
 
@@ -86,8 +70,6 @@ class TranslationApp:
                                        values=[n for n in lang_names if n != "Auto Detect"],
                                        width=22, state="readonly")
         self.tgt_combo.grid(row=0, column=4)
-
-        # Text areas
         text_frame = tk.Frame(self.root, bg="#1e1e2e")
         text_frame.pack(fill="both", expand=True, padx=30, pady=(0, 10))
         text_frame.columnconfigure(0, weight=1)
@@ -110,14 +92,10 @@ class TranslationApp:
                                     bg="#313244", fg="#a6e3a1", insertbackground="#cdd6f4",
                                     relief="flat", bd=0, padx=10, pady=10, state="disabled")
         self.output_text.grid(row=1, column=2, sticky="nsew")
-
-        # Character counter
         self.char_var = tk.StringVar(value="0 / 5000 characters")
         tk.Label(text_frame, textvariable=self.char_var, font=("Segoe UI", 8),
                  bg="#1e1e2e", fg="#6c7086").grid(row=2, column=0, sticky="w")
         self.input_text.bind("<KeyRelease>", self._update_char_count)
-
-        # Bottom buttons
         btn_frame = tk.Frame(self.root, bg="#1e1e2e", pady=10)
         btn_frame.pack()
 
@@ -129,8 +107,6 @@ class TranslationApp:
         self.status_var = tk.StringVar(value="Ready")
         tk.Label(self.root, textvariable=self.status_var, font=("Segoe UI", 9),
                  bg="#181825", fg="#6c7086", anchor="w").pack(fill="x", padx=10, pady=(0, 4))
-
-    # ── Helpers ──────────────────────────────────────────────────────
     def _update_char_count(self, _event=None):
         count = len(self.input_text.get("1.0", "end-1c"))
         self.char_var.set(f"{count} / 5000 characters")
@@ -188,9 +164,6 @@ class TranslationApp:
             self._set_output("")
             self.status_var.set(f"❌ Error: {exc}")
             messagebox.showerror("Translation Error", str(exc))
-
-
-# ─────────────────────────── Entry point ─────────────────────────────
 if __name__ == "__main__":
     root = tk.Tk()
     app = TranslationApp(root)
