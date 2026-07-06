@@ -21,7 +21,7 @@ LANGUAGES = {
     "Spanish":      "es",  "Swahili":      "sw",  "Swedish":      "sv",
     "Tamil":        "ta",  "Telugu":       "te",  "Thai":         "th",
     "Turkish":      "tr",  "Ukrainian":    "uk",  "Urdu":         "ur",
-    "Vietnamese":   "vi",
+    "Vietnamese":   "vi", "hindi":,
 }
 class TranslationApp:
     def __init__(self, root: tk.Tk):
